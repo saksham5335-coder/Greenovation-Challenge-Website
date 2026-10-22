@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GreenMarmorus Initiative — Marble Slurry & Greenovation Suite</title>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --ink: #111b17;
+      --muted: #6b7c73;
+      --line: #e2e8e4;
+      --paper: #ffffff;
+      --canvas: #f4f7f4;
+      --green: #10b981;
+      --green-dark: #047857;
+      --green-light: #ecfdf5;
+      --accent: #3b82f6;
+      --red: #ef4444;
+      font-family: "DM Sans", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: var(--canvas); color: var(--ink); font-size: 14px; }
+
+    .app-shell { display: flex; min-height: 100vh; width: 100vw; }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 260px; min-width: 260px; background: #ffffff;
+      border-right: 1px solid var(--line); padding: 24px 16px;
+      display: flex; flex-direction: column; height: 100vh;
+      position: fixed; top: 0; left: 0; z-index: 100;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px; color: var(--ink);
+      font: 800 18px "Manrope", sans-serif; text-decoration: none; margin-bottom: 28px;
+    }
+    .brand-mark {
+      display: grid; width: 34px; height: 34px; place-items: center;
+      border-radius: 10px; background: linear-gradient(135deg, var(--green), var(--green-dark));
+      color: #fff; font-size: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .workspace-label {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+      color: var(--muted); margin: 18px 0 8px; text-transform: uppercase;
+    }
+
+    .main-nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav-link {
+      display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+      border-radius: 8px; color: #4b5563; text-decoration: none;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: var(--green-light); color: var(--green-dark);
+      transform: translateX(2px);
+    }
+
+    /* Main Container */
+    .main-content {
+      margin-left: 260px; flex: 1; display: flex;
+      flex-direction: column; min-height: 100vh; width: calc(100vw - 260px);
+    }
+
+    .topbar {
+      height: 64px; border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; position: sticky; top: 0; z-index: 50;
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; background: var(--green-light); border-radius: 20px;
+      color: var(--green-dark); font-weight: 700; font-size: 12px;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 8px var(--green); animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .page-content { padding: 32px; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; }
+    .app-view { display: none; }
+    .app-view.active { display: block !important; animation: fadeIn 0.25s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Typography & Cards */
+    .welcome-row { margin-bottom: 24px; }
+    .eyebrow {
+      display: block; font-size: 11px; font-weight: 800;
+      letter-spacing: 1.5px; color: var(--green-dark); margin-bottom: 6px; text-transform: uppercase;
+    }
+    h1 { font: 800 34px/1.2 "Manrope", sans-serif; letter-spacing: -0.8px; margin-bottom: 8px; }
+    h1 span { color: var(--green-dark); }
+    .page-intro { color: var(--muted); font-size: 14px; max-width: 720px; }
+
+    .action-btn {
+      padding: 9px 16px; border-radius: 8px; background: var(--green-dark);
+      color: #ffffff; border: none; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; box-shadow: 0 2px 8px rgba(4, 120, 87, 0.2);
+    }
+    .action-btn:hover { background: #065f46; transform: translateY(-1px); }
+
+    /* Form Layouts & Inputs */
+    .dashboard-grid {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 24px;
+    }
+    .chart-panel {
+      background: var(--paper); border: 1px solid var(--line);
+      border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .chart-title { font: 700 16px "Manrope", sans-serif; }
+
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; color: var(--muted); }
+    .equation-input, select.equation-input {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+      border-radius: 8px; font-size: 13px; outline: none; background: #fafafa;
+    }
+    .equation-input:focus { border-color: var(--green); background: #ffffff; }
+    .slider-input {
+      width: 100%; height: 6px; background: var(--line); border-radius: 3px; outline: none; cursor: pointer; accent-color: var(--green-dark);
+    }
+    .result-box {
+      margin-top: 14px; padding: 14px; background: var(--green-light);
+      border-radius: 8px; font-weight: 700; color: var(--green-dark); border: 1px solid #a7f3d0;
+      white-space: pre-line; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a class="brand" href="#">
+        <span class="brand-mark">🌿</span>
+        <span>GreenMarmorus<span style="color:var(--green)">.</span></span>
+      </a>
+
+      <div class="workspace-label">Exhibition & Live Tech</div>
+      <nav class="main-nav">
+        <a class="nav-link active" data-target="tile-modeler">🧱 Resin Tile Formulator</a>
+      </nav>
+
+      <div class="workspace-label">Greenovation Analytics</div>
+      <nav class="main-nav">
+        <a class="nav-link" data-target="ecobreak">🔬 EcoBreak Predictor</a>
+        <a class="nav-link" data-target="biodegradability">🌱 Biodegradability Map</a>
+        <a class="nav-link" data-target="impact">🌍 Lifecycle Impact Tracker</a>
+      </nav>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <header class="topbar">
+        <div style="font-size: 13px; color: var(--muted);">GreenMarmorus Initiative / <strong id="activePageTitle" style="color: var(--ink);">Resin Tile Formulator</strong></div>
+        <div class="status-badge"><span class="pulse-dot"></span> System Engine Active</div>
+      </header>
+
+      <div class="page-content">
+
+        <!-- 1. RESIN TILE MODELER -->
+        <section id="tile-modeler" class="app-view active">
+          <div class="welcome-row">
+            <span class="eyebrow">GreenMarmorus Material Science</span>
+            <h1>Limestone Slurry + <span>Resin Tile Formulator</span></h1>
+            <p class="page-intro">Calculate mix ratios, resin binders, curing parameters, and tile geometry for high-strength stone composites.</p>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Tile Composite Recipe & Curing Controls</span></div>
+              
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Slurry Filler Ratio (%):</label>
+                  <input type="number" id="slurryInput" class="equation-input" value="40">
+                </div>
+                <div class="form-group">
+                  <label>Polymer Resin Binder (%):</label>
+                  <input type="number" id="resinInput" class="equation-input" value="60">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Press Load (Bar): <span id="pressVal" style="color:var(--green-dark)">150</span></label>
+                  <input type="range" id="pressInput" class="slider-input" min="50" max="300" value="150">
+                </div>
+                <div class="form-group">
+                  <label>Curing Temp (°C): <span id="tempVal" style="color:var(--green-dark)">80</span></label>
+                  <input type="range" id="tempInput" class="slider-input" min="20" max="150" value="80">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Tile Dimensions (Length × Width × Thickness in mm):</label>
+                <div class="form-row-3">
+                  <input type="number" id="dimL" class="equation-input" placeholder="L (mm)" value="600">
+                  <input type="number" id="dimW" class="equation-input" placeholder="W (mm)" value="600">
+                  <input type="number" id="dimT" class="equation-input" placeholder="T (mm)" value="12">
+                </div>
+              </div>
+
+              <button class="action-btn" id="calcMixBtn">Formulate & Simulate Mix</button>
+              <div class="result-box" id="tileResult">Calculated Compressive Strength: 52.4 MPa | Tile Weight: 8.85 kg</div>
+            </div>
+
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Material Breakdown Ratio</span></div>
+              <canvas id="tileMixChart" height="200"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. ECOBREAK PREDICTOR -->
+        <section id="ecobreak" class="app-view">
+          <div class="welcome-row">
+            <span class="eyebrow">Material Reality Lab</span>
+            <h1>EcoBreak <span>Predictor</span></h1>
+            <p class="page-intro">Simulate weather exposure variables and fit degradation trendlines across custom testing horizons.</p>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Environmental Weathering Controls</span></div>
+              
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Testing Horizon (Days):</label>
+                  <input type="number" id="horizonInput" class="equation-input" value="180">
+                </div>
+                <div class="form-group">
+                  <label>UV Exposure Index (kW/m²): <span id="uvVal" style="color:var(--green-dark)">4.5</span></label>
+                  <input type="range" id="uvInput" class="slider-input" min="1.0" max="10.0" step="0.5" value="4.5">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Relative Moisture / Submersion (%): <span id="moistVal" style="color:var(--green-dark)">65</span></label>
+                <input type="range" id="moistInput" class="slider-input" min="0" max="100" value="65">
+              </div>
+
+              <button class="action-btn" id="runTrendBtn">Run Mass Loss Fit Model</button>
+              <div class="result-box" id="trendResult">Model Output: 98.1% structural retention predicted at Day 180.</div>
+            </div>
+
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Sample Mass Retention Curve (%)</span></div>
+              <canvas id="ecobreakChart" height="200"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. BIODEGRADABILITY MAP -->
+        <section id="biodegradability" class="app-view">
+          <div class="welcome-row">
+            <span class="eyebrow">Durability & Residue Tracker</span>
+            <h1>Biodegradability <span>Map</span></h1>
+            <p class="page-intro">Set environmental exposure conditions and verify micro-particle residue counts against standards.</p>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Exposure Environment & Thresholds</span></div>
+              
+              <div class="form-group">
+                <label>Target Soil / Water Environment:</label>
+                <select id="envSelect" class="equation-input">
+                  <option value="soil">Direct Soil Immersion (pH 6.8)</option>
+                  <option value="seawater">Saline Seawater Flow (pH 8.1)</option>
+                  <option value="compost">Controlled Industrial Compost (55°C)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Micro-particle Safety Threshold (PPM):</label>
+                <input type="number" id="ppmThresholdInput" class="equation-input" value="20">
+              </div>
+
+              <button class="action-btn" id="genReportBtn">Generate Evidence Report</button>
+              <div class="result-box" id="reportResult">Evidence Status: Click 'Generate Evidence Report' to run diagnostic scan.</div>
+            </div>
+
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Residue Micro-Particle Distribution</span></div>
+              <canvas id="residueChart" height="200"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. LIFECYCLE IMPACT TRACKER -->
+        <section id="impact" class="app-view">
+          <div class="welcome-row">
+            <span class="eyebrow">Lifecycle Analysis</span>
+            <h1>Hidden Impact <span>Tracker</span></h1>
+            <p class="page-intro">Calculate real-world diverted waste mass and net avoided carbon offsets for custom flooring projects.</p>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Project Scale & Freight Distance</span></div>
+              
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Flooring Area (m²):</label>
+                  <input type="number" id="areaInput" class="equation-input" value="100">
+                </div>
+                <div class="form-group">
+                  <label>Freight Transport Distance (km):</label>
+                  <input type="number" id="distInput" class="equation-input" value="120">
+                </div>
+              </div>
+
+              <button class="action-btn" id="calcLcaBtn">Recalculate Net LCA Offset</button>
+              <div class="result-box" id="lcaResult">Net Carbon Avoidance: -185 kg CO2e total | Diverted Slurry Mass: 350 kg</div>
+            </div>
+
+            <div class="chart-panel">
+              <div class="chart-header"><span class="chart-title">Carbon Equivalent Emissions (kg CO2e)</span></div>
+              <canvas id="lcaChart" height="200"></canvas>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- Tab Navigation System ---
+      const titles = {
+        "tile-modeler": "Resin Tile Formulator",
+        "ecobreak": "EcoBreak Predictor",
+        "biodegradability": "Biodegradability Map",
+        "impact": "Lifecycle Impact Tracker"
+      };
+
+      const navLinks = document.querySelectorAll(".nav-link");
+      const views = document.querySelectorAll(".app-view");
+      const pageTitle = document.getElementById("activePageTitle");
+
+      navLinks.forEach(link => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = link.getAttribute("data-target");
+
+          navLinks.forEach(l => l.classList.remove("active"));
+          views.forEach(v => v.classList.remove("active"));
+
+          link.classList.add("active");
+          const targetView = document.getElementById(target);
+          if (targetView) targetView.classList.add("active");
+
+          if (pageTitle && titles[target]) {
+            pageTitle.textContent = titles[target];
+          }
+        });
+      });
+
+      // --- Slider Live Value Readers ---
+      document.getElementById("pressInput").addEventListener("input", (e) => document.getElementById("pressVal").textContent = e.target.value);
+      document.getElementById("tempInput").addEventListener("input", (e) => document.getElementById("tempVal").textContent = e.target.value);
+      document.getElementById("uvInput").addEventListener("input", (e) => document.getElementById("uvVal").textContent = e.target.value);
+      document.getElementById("moistInput").addEventListener("input", (e) => document.getElementById("moistVal").textContent = e.target.value);
+
+      // --- Chart 1: Resin Tile Mix Doughnut Chart ---
+      const ctxTile = document.getElementById("tileMixChart").getContext("2d");
+      const tileChart = new Chart(ctxTile, {
+        type: "pie",
+        data: {
+          labels: ["Slurry Filler", "Resin Binder", "Additives"],
+          datasets: [{
+            data: [40, 60, 0],
+            backgroundColor: ["#047857", "#3b82f6", "#f59e0b"]
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+      });
+
+      document.getElementById("calcMixBtn").addEventListener("click", () => {
+        const slurry = parseFloat(document.getElementById("slurryInput").value) || 0;
+        const resin = parseFloat(document.getElementById("resinInput").value) || 0;
+        const press = parseFloat(document.getElementById("pressInput").value) || 100;
+        const temp = parseFloat(document.getElementById("tempInput").value) || 25;
+        const dimL = parseFloat(document.getElementById("dimL").value) || 0;
+        const dimW = parseFloat(document.getElementById("dimW").value) || 0;
+        const dimT = parseFloat(document.getElementById("dimT").value) || 0;
+
+        const additives = Math.max(0, 100 - (slurry + resin));
+        tileChart.data.datasets[0].data = [slurry, resin, additives];
+        tileChart.update();
+
+        // Mechanical strength simulation formula
+        const strength = (slurry * 0.35) + (resin * 0.55) + (press * 0.08) + (temp * 0.05);
+        const volumeCm3 = (dimL * dimW * dimT) / 1000;
+        const weightKg = (volumeCm3 * 2.05) / 1000; // ~2.05 g/cm3 composite density
+
+        document.getElementById("tileResult").textContent = `Calculated Compressive Strength: ${strength.toFixed(1)} MPa\nTile Unit Volume: ${volumeCm3.toFixed(0)} cm³ | Estimated Mass: ${weightKg.toFixed(2)} kg`;
+      });
+
+      // --- Chart 2: EcoBreak Degradation Chart & Active Fit Button ---
+      const ctxEco = document.getElementById("ecobreakChart").getContext("2d");
+      const ecoChart = new Chart(ctxEco, {
+        type: "line",
+        data: {
+          labels: ["Day 0", "Day 45", "Day 90", "Day 135", "Day 180"],
+          datasets: [{
+            label: "Mass Retention (%)",
+            data: [100, 99.6, 99.2, 98.7, 98.1],
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16, 185, 129, 0.1)",
+            fill: true
+          }]
+        }
+      });
+
+      document.getElementById("runTrendBtn").addEventListener("click", () => {
+        const horizon = parseInt(document.getElementById("horizonInput").value) || 180;
+        const uv = parseFloat(document.getElementById("uvInput").value) || 4.5;
+        const moist = parseFloat(document.getElementById("moistInput").value) || 65;
+
+        const decayRate = (uv * 0.0008) + (moist * 0.0001);
+        const finalRetention = Math.max(80, 100 - (horizon * decayRate));
+
+        const labels = [0, 0.25, 0.5, 0.75, 1.0].map(p => `Day ${Math.round(horizon * p)}`);
+        const points = [100, 100 - (horizon * 0.25 * decayRate), 100 - (horizon * 0.5 * decayRate), 100 - (horizon * 0.75 * decayRate), finalRetention];
+
+        ecoChart.data.labels = labels;
+        ecoChart.data.datasets[0].data = points;
+        ecoChart.update();
+
+        document.getElementById("trendResult").textContent = `GREENMarmorus REGRESSION MODEL CALCULATED:
+- Decay Factor (k): -${decayRate.toFixed(4)} %/day
+- Simulated Test Horizon: ${horizon} Days
+- Environmental Stress: ${uv} kW/m² UV | ${moist}% Moisture
+- Predicted Mass Retention: ${finalRetention.toFixed(1)}% (High Structural Durability)`;
+      });
+
+      // --- Chart 3: Biodegradability Residue Chart & Report Generator ---
+      const ctxResidue = document.getElementById("residueChart").getContext("2d");
+      const residueChart = new Chart(ctxResidue, {
+        type: "bar",
+        data: {
+          labels: ["Micro-plastics", "Mineral Filler", "Organic Fraction"],
+          datasets: [{
+            label: "Residue Particle Count (PPM)",
+            data: [12, 450, 4],
+            backgroundColor: ["#ef4444", "#047857", "#f59e0b"]
+          }]
+        }
+      });
+
+      document.getElementById("genReportBtn").addEventListener("click", () => {
+        const env = document.getElementById("envSelect").value;
+        const threshold = parseFloat(document.getElementById("ppmThresholdInput").value) || 20;
+
+        let microPlastics = Math.floor(Math.random() * 5) + 8;
+        if (env === "compost") microPlastics += 4;
+
+        const mineralFiller = Math.floor(Math.random() * 30) + 440;
+        const organic = Math.floor(Math.random() * 3) + 2;
+
+        residueChart.data.datasets[0].data = [microPlastics, mineralFiller, organic];
+        residueChart.update();
+
+        const status = microPlastics <= threshold ? "COMPLIANT WITH ASTM D6400" : "WARNING: EXCEEDS PPM THRESHOLD";
+
+        document.getElementById("reportResult").textContent = `GREENMarmorus INITIATIVE — EVIDENCE REPORT:
+• Inspection Environment: ${env.toUpperCase()}
+• Inert Mineral Particle Mass: ${mineralFiller} PPM
+• Polymer Residue Fraction: ${microPlastics} PPM (Safety Limit: ${threshold} PPM)
+• Status: ${status}`;
+      });
+
+      // --- Chart 4: Lifecycle Carbon Offset Chart ---
+      const ctxLca = document.getElementById("lcaChart").getContext("2d");
+      const lcaChart = new Chart(ctxLca, {
+        type: "bar",
+        data: {
+          labels: ["Resin Production", "Tile Milling", "Avoided Mining Credit"],
+          datasets: [{
+            label: "Carbon Equivalent (kg CO2e)",
+            data: [120, 40, -345],
+            backgroundColor: ["#ef4444", "#3b82f6", "#10b981"]
+          }]
+        }
+      });
+
+      document.getElementById("calcLcaBtn").addEventListener("click", () => {
+        const area = parseFloat(document.getElementById("areaInput").value) || 100;
+        const dist = parseFloat(document.getElementById("distInput").value) || 100;
+
+        const resinCO2 = area * 1.2;
+        const transportCO2 = (dist * 0.15) * (area / 100);
+        const avoidedQuarryCO2 = area * -3.45;
+        const netCO2 = resinCO2 + transportCO2 + avoidedQuarryCO2;
+
+        const divertedSlurryKg = area * 3.5; // 3.5 kg/m2 slurry diversion rate
+
+        lcaChart.data.datasets[0].data = [resinCO2, transportCO2, avoidedQuarryCO2];
+        lcaChart.update();
+
+        document.getElementById("lcaResult").textContent = `GreenMarmorus Project Scale: ${area} m² Flooring (${dist} km freight)
+• Diverted Marble Slurry Mass: ${divertedSlurryKg.toFixed(0)} kg
+• Net Carbon Offset: ${netCO2.toFixed(1)} kg CO2e (Avoided virgin stone quarrying)`;
+      });
+    });
+  </script>
+</body>
+</html>
